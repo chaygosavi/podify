@@ -1,36 +1,31 @@
-import { CreateUser } from "#/@types/user";
+import { CreateUser, VerifyEmailRequest } from "#/@types/user";
 import EmailVerificationToken from "#/models/emailVerificationToken";
 import User from "#/models/user";
 import { generateToken } from "#/utils/helper";
-import { MAILTRAP_PASS, MAILTRAP_USER } from "#/utils/variables";
+import { sendVerificationMail } from "#/utils/mail";
 import { RequestHandler } from "express";
-import nodemailer from "nodemailer";
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
   const { email, password, name } = req.body;
   const user = await User.create({ email, password, name });
 
-  const transport = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-    port: 2525,
-    auth: {
-      user: MAILTRAP_USER,
-      pass: MAILTRAP_PASS,
-    },
-  });
-
   const token = generateToken();
 
-  await EmailVerificationToken.create({
-    owner: user._id,
-    token,
+  sendVerificationMail(token, { name, email, userId: user._id.toString() });
+
+  res.status(201).json({ user: { id: user._id, name, email } });
+};
+
+export const verifyEmail: RequestHandler = async (
+  req: VerifyEmailRequest,
+  res
+) => {
+  const { token, userId } = req.body;
+
+  const verificationToken = await EmailVerificationToken.findOne({
+    owner: userId,
   });
 
-  transport.sendMail({
-    to: user.email,
-    from: "jai@shree.ram",
-    html: `<h1>Your verification token is ${token}</h1>`,
-  });
-
-  res.status(201).json(user);
+  if (!verificationToken) return res.status(403).json({ message: "Invalid token" }
+  verificationToken?.compareToken(token);
 };

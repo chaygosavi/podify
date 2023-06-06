@@ -1,4 +1,5 @@
 import { Model, ObjectId, Schema, model } from "mongoose";
+import { hash, compare } from "bcrypt";
 
 interface EmailVerificationTokenDocument {
   owner: ObjectId;
@@ -6,31 +7,46 @@ interface EmailVerificationTokenDocument {
   createdAt: Date;
 }
 
-const emailVerificationTokenSchema = new Schema<EmailVerificationTokenDocument>(
-  {
-    owner: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: "User",
-    },
-    token: {
-      type: String,
-      required: true,
-    },
-    createdAt: {
-      type: Date,
-      expires: 3600,
-      default: Date.now(),
-    },
-  }
-);
+interface Methods {
+  compareToken(token: string): Promise<boolean>;
+}
 
-emailVerificationTokenSchema.pre("save", function (next) {
-  this.token = this.token.replace(/ /g, "");
+const emailVerificationTokenSchema = new Schema<
+  EmailVerificationTokenDocument,
+  {},
+  Methods
+>({
+  owner: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
+  token: {
+    type: String,
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    expires: 3600,
+    default: Date.now(),
+  },
+});
+
+emailVerificationTokenSchema.pre("save", async function (next) {
+  console.log("this.token => ", this.token);
+  if (this.isModified("token")) {
+    this.token = await hash(this.token, 10);
+  }
+  console.log("[Modified] this.token => ", this.token);
   next();
 });
+
+emailVerificationTokenSchema.methods.compareToken = async function (token) {
+  if (!token) return false;
+  return await compare(token, this.token);
+};
 
 export default model(
   "EmailVerificationTokenSchema",
   emailVerificationTokenSchema
-) as Model<EmailVerificationTokenDocument>;
+) as Model<EmailVerificationTokenDocument, {}, Methods>;
