@@ -2,6 +2,7 @@ import {
   create,
   verifyEmail,
   sendReVerificationToken,
+  generateForgetPasswordLink,
 } from "#/controllers/user";
 import { validate } from "#/middleware/validator";
 import {
@@ -20,5 +21,6 @@ router.post(
   validate(EmailReVerificationBody),
   sendReVerificationToken
 );
+router.post("/forget-password", generateForgetPasswordLink);
 
 export default router;
