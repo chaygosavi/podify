@@ -20,3 +20,10 @@ export interface ReVerifyEmailRequest extends Request {
     userId: string;
   };
 }
+
+export interface UpdatePassword extends Request {
+  body: {
+    password: string;
+    userId: string;
+  };
+}
