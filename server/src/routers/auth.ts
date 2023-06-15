@@ -1,25 +1,26 @@
 import {
   create,
-  verifyEmail,
-  sendReVerificationToken,
   generateForgetPasswordLink,
   grantValid,
-  updatePassword,
+  sendProfile,
+  sendReVerificationToken,
   signIn,
-} from "#/controllers/user";
+  updatePassword,
+  updateProfile,
+  verifyEmail,
+  logOut,
+} from "#/controllers/auth";
 import { isValidPassResetToken, mustAuth } from "#/middleware/auth";
+import { fileParsre } from "#/middleware/fileParser";
 import { validate } from "#/middleware/validator";
-import User from "#/models/user";
 import {
   CreateUserSchema,
-  TokenAndIdValidation,
   EmailReVerificationBody,
-  UpdatePasswordSchema,
   SignInValidationSchema,
+  TokenAndIdValidation,
+  UpdatePasswordSchema,
 } from "#/utils/validationSchema";
-import { JWT_SECRET } from "#/utils/variables";
 import { Router } from "express";
-import { JwtPayload, verify } from "jsonwebtoken";
 
 const router = Router();
 
@@ -44,10 +45,8 @@ router.post(
   updatePassword
 );
 router.post("/sign-in", validate(SignInValidationSchema), signIn);
-router.get("/is-auth", mustAuth, (req, res) => {
-  res.json({
-    profile: req?.user,
-  });
-});
+router.get("/is-auth", mustAuth, sendProfile);
+router.post("/update-profile", mustAuth, fileParsre, updateProfile);
+router.post("/log-out", mustAuth, logOut);
 
 export default router;
