@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import "./db";
 import authRouter from "./routers/auth";
+import audioRouter from "./routers/audio";
+import favoriteRouter from "./routers/favorite";
 
 const app = express();
 
@@ -10,6 +12,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static("src/public"));
 
 app.use("/auth", authRouter);
+app.use("/audio", audioRouter);
+app.use("/favorite", favoriteRouter);
 
 const PORT = process.env.PORT || 9999;
 
